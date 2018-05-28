@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import cv2
 
@@ -12,11 +14,12 @@ class ObjectDetector:
     
     COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
-    prototxt = "MobileNetSSD_deploy.prototxt.txt"
-    model = "MobileNetSSD_deploy.caffemodel"
+    dirname = os.path.dirname(os.path.realpath(__file__))
+
+    prototxt = '{}/{}'.format(dirname, 'model/MobileNetSSD_deploy.prototxt.txt')
+    model = '{}/{}'.format(dirname, 'model/MobileNetSSD_deploy.caffemodel')
 
     def run(self, path, minConfidence):
-
         # load our serialized model from disk
         print("[INFO] loading model...")
         net = cv2.dnn.readNetFromCaffe(self.prototxt, self.model)
