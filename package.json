@@ -1,0 +1,19 @@
+{
+  "name": "object-detection",
+  "version": "1.0.0",
+  "description": "TODO",
+  "main": "iexec.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zied-Guesmi/object-detection.git"
+  },
+  "author": {
+    "name": "Zied Guesmi"
+  },
+  "license": "",
+  "homepage": "https://zied-guesmi.github.io/object-detection/",
+  "logo": "logo.png",
+  "dependencies": {
+    "iexec-oracle-contract": "1.1.7"
+  }
+}
