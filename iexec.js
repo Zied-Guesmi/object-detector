@@ -1,11 +1,11 @@
 module.exports = {
-  name: 'object-detection',
+  name: 'object-detector',
   app: {
     type: 'DOCKER',
-    envvars: 'XWDOCKERIMAGE=ziedguesmi/object-detection',
+    envvars: 'XWDOCKERIMAGE=ziedguesmi/object-detector',
   },
   work: {
     cmdline: '',
-    dirinuri: 'https://github.com/Zied-Guesmi/object-detection/blob/master/DATADIR.zip?raw=true',
+    dirinuri: 'https://github.com/Zied-Guesmi/object-detector/blob/master/DATADIR.zip?raw=true',
   }
 };
