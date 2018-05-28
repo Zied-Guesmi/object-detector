@@ -1,0 +1,3 @@
+#!/bin/sh
+
+python3 /object-detection/src/app.py
