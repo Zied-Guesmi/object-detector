@@ -29,8 +29,6 @@ class CustomException(Exception):
         pass
     
     def message(self, category, key=None, param=None):
-        # print('key: ' + key)
-        # print('param: ' + str(param))
         message = messages(key, param) if key is not None else ''
         return '[{}] {}'.format(category, message)
 

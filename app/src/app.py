@@ -31,7 +31,8 @@ class App:
         self._paths = {}
         self.flag = Flag()
         self.readAppConfigFile()
-        self.readInputConfigFile()
+        try: self.readInputConfigFile()
+        except customExceptions.CustomException: pass
         try: self.prepareDatadir()
         except Exception as e: raise customExceptions.Fatal(err=e)
 
@@ -63,8 +64,6 @@ class App:
             raise customExceptions.Warning(key='InputConfigNotFound', param=self._paths['conf'])
         try:
             inputConfig = yaml.load(open(self._paths['conf']), yamlordereddictloader.SafeLoader)
-            # print('self.minConfidence' + str(self.minConfidence))
-            # print('confidence in params' + str(inputConfig['confidence']))
             self.minConfidence = float(inputConfig['confidence'])
         except Exception as e:
             raise customExceptions.Fatal(err=e, key='IllegalInputConfigFormat')
