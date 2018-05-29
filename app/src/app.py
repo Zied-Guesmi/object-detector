@@ -13,9 +13,10 @@ from consensus import Consensus
 
 class Flag:
 
-    taskStarted = '-> processing file {}'
-    taskEnded = 'done..'
-    executionEnded = 'Supported images have been moved to "{}" folder. Text files are saved in "{}" folder.'
+    taskStarted = '[INFO] processing file {}'
+    taskEnded = '[INFO] done..\n'
+    executionEnded = '[INFO] Supported images have been moved to "{}" folder.\n' \
+                   + '[INFO] Text files are saved in "{}" folder.'
 
 
 class App:
@@ -30,8 +31,9 @@ class App:
         self._paths = {}
         self.flag = Flag()
         self.readAppConfigFile()
-        # self.readInputConfigFile()
-        self.prepareDatadir()
+        self.readInputConfigFile()
+        try: self.prepareDatadir()
+        except Exception as e: raise customExceptions.Fatal(err=e)
 
     @property
     def datadir(self):
@@ -45,7 +47,7 @@ class App:
         dirname = os.path.dirname
         path = self._appConfigFile.format(dirname(dirname(os.path.realpath(__file__))))
         if not os.path.isfile(path):
-            raise customExceptions.AppConfigNotFoundError(path)
+            raise customExceptions.Fatal(key='AppConfigNotFound', param=path)
         try:
             yml = yaml.load(open(path), yamlordereddictloader.SafeLoader)
             self._paths['/'] = yml['datadir']
@@ -54,15 +56,18 @@ class App:
             self._paths['conf'] = '{}/{}'.format(yml['datadir'], yml['input-config'])
             self.flag.executionEnded = self.flag.executionEnded.format(yml['input-dir'], yml['output-dir'])
         except Exception as e:
-            raise customExceptions.IllegalAppConfigFormatError(e)
+            raise customExceptions.Fatal(err=e, key='IllegalAppConfigFormat')
 
     def readInputConfigFile(self):
         if not os.path.isfile(self._paths['conf']):
-            raise customExceptions.InputConfigNotFoundError(self._paths['conf'])
+            raise customExceptions.Warning(key='InputConfigNotFound', param=self._paths['conf'])
         try:
-            self._inputConfig = yaml.load(open(self._paths['conf']), yamlordereddictloader.SafeLoader)
+            inputConfig = yaml.load(open(self._paths['conf']), yamlordereddictloader.SafeLoader)
+            # print('self.minConfidence' + str(self.minConfidence))
+            # print('confidence in params' + str(inputConfig['confidence']))
+            self.minConfidence = float(inputConfig['confidence'])
         except Exception as e:
-            raise customExceptions.IllegalInputConfigFormatError(e)
+            raise customExceptions.Fatal(err=e, key='IllegalInputConfigFormat')
 
     def getAbsPath(self, dirname, filename, extension=''):
         return '{}/{}{}'.format(self._paths[dirname], filename, extension)
@@ -76,25 +81,12 @@ class App:
             imghdr.what( self.getAbsPath('/', filename) ) in self._SUPPORTED_IMAGES )
 
     def prepareDatadir(self):
-        try:
-            datadirContent = os.listdir(self._paths['/'])
-            os.mkdir(self._paths['/in'])
-            os.mkdir(self._paths['/out'])
-            for filename in [ f for f in datadirContent if self.isSupportedImageType(f) ]:
-                subprocess.call([ 'mv', self.getAbsPath('/', filename), self._paths['/in'] ])
-        except Exception as e:
-            raise customExceptions.FatalError(e)
+        datadirContent = os.listdir(self._paths['/'])
+        os.mkdir(self._paths['/in'])
+        os.mkdir(self._paths['/out'])
+        for filename in [ f for f in datadirContent if self.isSupportedImageType(f) ]:
+            subprocess.call([ 'mv', self.getAbsPath('/', filename), self._paths['/in'] ])
 
-    def save(self, filename, text):
-        try:
-            path = self.getAbsPath('/out', filename, self._EXTENSION)
-            fp = open(path, 'wb')
-            fp.write(text)
-        except Exception as e:
-            raise customExceptions.CanNotSaveTextError(e, path)
-        finally:
-            fp.close()
-    
     def renameInputFiles(self):
         for filename in os.listdir(self._paths['/in']):
             oldPath = self.getAbsPath('/in', filename)
@@ -103,26 +95,18 @@ class App:
             subprocess.call([ 'mv', oldPath, newPath ])
 
     def main(self):
-
         objectDetector = ObjectDetector()
-        for filename in os.listdir(self._paths['/in']):
-            try:
-                print(self.flag.taskStarted.format(filename))
-                filepath = self.getAbsPath('/in', filename)
-
-                if not os.path.isfile(filepath):
-                    if os.path.isfile(self.getAbsPath('/', filename)):
-                        raise customExceptions.FileTypeNotSupportedError(filepath)
-                    raise customExceptions.FileNotFoundError(filepath)
-
-                objectDetector.run(filepath, self.minConfidence)
-                print(self.flag.taskEnded)
-            except customExceptions.CustomError:
-                pass
-            except Exception as e:
-                print(e)
-
-        self.renameInputFiles()
+        for imagename in os.listdir(self._paths['/in']):
+            print(self.flag.taskStarted.format(imagename))
+            imagepath = self.getAbsPath('/in', imagename)
+            saveTo = self.getAbsPath('/out', imagename)
+            try: objectDetector.run(imagepath, saveTo, self.minConfidence)
+            except customExceptions.CustomException: pass
+            except Exception as e: print(e)
+            print(self.flag.taskEnded)
+        try: self.renameInputFiles()
+        except Exception as e:
+            raise customExceptions.Error(err=e, key='CantRenameInputFiles')
         print(self.flag.executionEnded)
 
 

@@ -1,111 +1,56 @@
 import sys
 
 
-messages = {
-    # app errors
-    'AppConfigNotFound': 'can not load app config file - {}',
-    'IllegalAppConfigFormat': 'can not parse app config file\n{}',
-    'InputConfigNotFoundWarning': 'can not load input config file - {} \n defaulting to confidence = 0.2 (20%)',
-    'IllegalInputConfigFormat': 'can not parse input config file - required format is "confidence:<number>"\n{}',
-    'FileTypeNotSupported': 'File type not supported - {}',
-    'FileNotFound': 'File not found - {}',
-    # object detection errors
-    'CantLoadModel': 'can not load network model',
-    'CantLoadImage': 'can not load image to network',
-    'DnnNetwork': 'can not forward image throw network',
-    'CantGetClassIndex': 'can not get class index',
-    'CantGetObjCoordinates': 'can not get object coordinates',
-    'CantAddLabelToImage': 'cannot add box & label to image',
-    'CantSaveOutputImage': 'cannnot save output image',
-    'CantDetectObjects': '',
-    'CantCreateConsensusFile': 'can not create consensus file - {}\n{}',
-}
-
-class Warning(Exception):
-
-    def __init__(self, message):
-        print('[Warning] ' + message)
+def messages(key, param=None):
+    return {
+        # warnings
+        'InputConfigNotFound': 'can not load input config file - {} \n defaulting to confidence = 0.2 (20%)',
+        # errors
+        'CantLoadModel': 'can not load network model',
+        'CantLoadImage': 'can not load image to network',
+        'DnnNetworkError': 'can not forward image throw network',
+        'CantGetClassIndex': 'can not get class index',
+        'CantGetObjCoordinates': 'can not get object coordinates',
+        'CantAddLabelToImage': 'can not add box & label to image',
+        'CantSaveOutputImage': 'can not save output image',
+        'CantDetectObjects': '',
+        'CantRenameInputFiles': 'can not rename input files to avoid removing them by the sdk',
+        'CantCreateConsensusFile': 'can not create consensus file - {}',
+        # fatal
+        'AppConfigNotFound': 'can not load app config file - {}',
+        'IllegalAppConfigFormat': 'can not parse app config file',
+        'IllegalInputConfigFormat': 'can not parse input config file - required format is "confidence:<number>"',
+    }[key].format(param)
 
 
-class Error(Exception):
+class CustomException(Exception):
 
-    def __init__(self, message):
-        print('[Error] ' + message)
+    def __init__(self):
+        pass
+    
+    def message(self, category, key=None, param=None):
+        # print('key: ' + key)
+        # print('param: ' + str(param))
+        message = messages(key, param) if key is not None else ''
+        return '[{}] {}'.format(category, message)
 
+class Warning(CustomException):
 
-class Fatal(Exception):
-
-    def __init__(self, message):
-        sys.exit('[FATAL] ' + message)
-
-
-class InputConfigNotFoundWarning(Warning):
-
-    message = 
-
-    def __init__(self, filename):
-        super().__init__(self.message.format(filename))
+    def __init__(self, err=None, key=None, param=None):
+        print(super().message('WARNING', key=key, param=param))
+        if err is not None: print(err)
 
 
-class AppConfigNotFoundError(Fatal):
+class Error(CustomException):
 
-    message = ''
-
-    def __init__(self, filename):
-        super().__init__(self.message.format(filename))
-
-
-class IllegalAppConfigFormatError(Fatal):
-
-    message = ''
-
-    def __init__(self, err):
-        super().__init__(self.message.format(err))
+    def __init__(self, err=None, key=None, param=None):
+        print(super().message('ERROR', key=key, param=param))
+        if err is not None: print(err)
 
 
-class IllegalInputConfigFormatError(Fatal):
+class Fatal(CustomException):
 
-    message = ''
-
-    def __init__(self, err):
-        super().__init__(self.message.format(err))
-
-
-# class FileNotFoundError(Error):
-
-#     message = ''
-
-#     def __init__(self, filename):
-#         super().__init__(self.message.format(filename))
-
-
-class FileTypeNotSupportedError(Error):
-
-    message = ''
-
-    def __init__(self, filename):
-        super().__init__(self.message.format(filename))
-
-
-CantLoadModelError
-CantLoadImageError
-DnnNetworkError
-CantGetClassIndexError
-CantGetObjCoordinatesError
-CantAddLabelToImageError
-
-
-class CanNotDetectObjectsError(Error):
-
-    message = 'can not extracte text from image - {}\n{}'
-
-    def __init__(self, err, filename):
-        super().__init__(self.message.format(filename, err))
-
-
-class CanNotCreateConsensusFile(Fatal):
-
-    message = ''
-
-    def __init__(self, err, filename):
-        super().__init__(self.message.format(filename, err))
+    def __init__(self, err=None, key=None, param=None):
+        print(super().message('FATAL', key=key, param=param))
+        if err is not None: print(err)
+        sys.exit()

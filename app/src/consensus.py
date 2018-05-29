@@ -26,7 +26,7 @@ class Consensus:
                 filehash = self.hashFile(path)
                 consensus.write('{}\n'.format(filehash))
         except Exception as e:
-            raise customExceptions.FatalError(e + ' - ' + filename)
+            raise customExceptions.Fatal(e + ' - ' + filename)
         finally:
             consensus.close()
 
@@ -38,4 +38,4 @@ class Consensus:
                 md5.update(buffer)
             return md5.hexdigest()
         except Exception as e:
-            raise customExceptions.FatalError(e)
+            raise customExceptions.Fatal(e)
