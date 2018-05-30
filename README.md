@@ -2,11 +2,12 @@
 
 
 ## Description
-TODO
+Credit: [pyimagesearch](https://www.pyimagesearch.com/2017/09/11/object-detection-with-deep-learning-and-opencv/)
+// TODO
 
 ## Usage
 
-Bring your images together in a folder (exp: DATADIR) and add an ```input-config.yml``` file in the same folder.
+Bring your images together in a folder (exp: DATADIR) and add an ```input-config.yml``` file in the same folder if you want to change the defautl confidence value (20%). The file should contain this line: ```confidence: <value>``` and the value should be between 0.0 and 1.0.
 
 ![screenshot](./images/screenshot-1.png)
 
@@ -16,14 +17,14 @@ In the ```app/app-config.yml``` file, change the datadir parameter to the path o
     $ sed -i "s/\/iexec/<path/to/datadir/folder>/" app/app-config.yml
     $ python3 app/src/app.py
 
-You shoud find your result in the ```DATADIR/out/``` folder.
+The ```DATADIR/out/``` folder contains the output images where the bounding boxes have been added to surround  objects. It contains also a json file describing for each image the detected objects (name, confidence).
 
 ![screenshot](./images/screenshot-2.png)
 
 
 ## Supported image types
 
-Tested extensions: **jpeg**, **bmp**, **png**  
+**jpeg**, **bmp**, **png**  
 Those extensions are accepted but were not tested yet: **pbm**, **pgm**, **ppm**, **tiff**, **rast**, **xbm**  
 
 
