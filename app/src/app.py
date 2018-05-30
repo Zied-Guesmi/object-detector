@@ -2,9 +2,11 @@ import os
 import sys
 import subprocess
 
+from collections import OrderedDict
 import imghdr
 import yaml
 import yamlordereddictloader
+import json
 
 from object_detector import ObjectDetector
 import custom_exceptions as customExceptions
@@ -54,6 +56,7 @@ class App:
             self._paths['/'] = yml['datadir']
             self._paths['/in'] = '{}/{}'.format(yml['datadir'], yml['input-dir'])
             self._paths['/out'] = '{}/{}'.format(yml['datadir'], yml['output-dir'])
+            self._paths['json'] = '{}/{}'.format(self._paths['/out'], yml['output-json'])
             self._paths['conf'] = '{}/{}'.format(yml['datadir'], yml['input-config'])
             self.flag.executionEnded = self.flag.executionEnded.format(yml['input-dir'], yml['output-dir'])
         except Exception as e:
@@ -93,19 +96,36 @@ class App:
             newPath = self.getAbsPath('/in', newName)
             subprocess.call([ 'mv', oldPath, newPath ])
 
+    def writeJsonFile(self, output):
+        with open(self._paths['json'], 'w+') as fp:
+            fp.write(json.dumps(output, indent=4))
+
     def main(self):
+        output = []
         objectDetector = ObjectDetector()
+
         for imagename in os.listdir(self._paths['/in']):
             print(self.flag.taskStarted.format(imagename))
             imagepath = self.getAbsPath('/in', imagename)
             saveTo = self.getAbsPath('/out', imagename)
-            try: objectDetector.run(imagepath, saveTo, self.minConfidence)
+            try:
+                imageObjects = objectDetector.run(imagepath, saveTo, self.minConfidence)
+                output.append(OrderedDict([
+                    ('image', imagename),
+                    ('objects', imageObjects)
+                ]))
             except customExceptions.CustomException: pass
             except Exception as e: print(e)
             print(self.flag.taskEnded)
+
+        try: self.writeJsonFile(output)
+        except Exception as e:
+            raise customExceptions.Error(err=e, key='CantWriteJsonFiles')
+
         try: self.renameInputFiles()
         except Exception as e:
             raise customExceptions.Error(err=e, key='CantRenameInputFiles')
+
         print(self.flag.executionEnded)
 
 

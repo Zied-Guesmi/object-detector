@@ -1,5 +1,6 @@
 import os
 
+from collections import OrderedDict
 import numpy as np
 import cv2
 
@@ -12,15 +13,13 @@ class ObjectDetector:
     "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person",
     "pottedplant", "sheep", "sofa", "train", "tvmonitor" ]
 
-    COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
-
-    dirname = os.path.dirname(os.path.realpath(__file__))
-
-    prototxt = '{}/{}'.format(dirname, 'model/MobileNetSSD_deploy.prototxt.txt')
-    caffeModel = '{}/{}'.format(dirname, 'model/MobileNetSSD_deploy.caffemodel')
+    def __init__(self):
+        self.COLORS = np.random.uniform(0, 255, size=(len(self.CLASSES), 3))
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        self.prototxt = '{}/{}'.format(dirname, 'model/MobileNetSSD_deploy.prototxt.txt')
+        self.caffeModel = '{}/{}'.format(dirname, 'model/MobileNetSSD_deploy.caffemodel')
 
     def run(self, imgPath, outPath, minConfidence):
-        # print("[INFO] loading model...")
         try: net = cv2.dnn.readNetFromCaffe(self.prototxt, self.caffeModel)
         except Exception as e: raise customExceptions.Error(e, 'CantLoadModel')
 
@@ -32,7 +31,6 @@ class ObjectDetector:
         except Exception as e:
             raise customExceptions.Error(e, 'CantLoadImage')
 
-        # print("[INFO] computing object detections...")
         try:
             net.setInput(blob)
             detections = net.forward()
@@ -40,12 +38,12 @@ class ObjectDetector:
             raise customExceptions.Error(e, 'DnnNetworkError')
 
         # loop over the detections
+        # print()
+        # print(detections)
+        # print()
+        objects = []
         for i in np.arange(0, detections.shape[2]):
             confidence = detections[0, 0, i, 2]
-            ##
-            # print('confidence=' + str(confidence))
-            # print('min confidence=' + str(minConfidence))
-            ## 
             if confidence > minConfidence:
                 try:
                     # get index of the class label then compute the bounding box for the object
@@ -58,6 +56,7 @@ class ObjectDetector:
                 try:
                     box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
                     (startX, startY, endX, endY) = box.astype("int")
+                    (startX, startY, endX, endY) = box.astype("int")
                 except Exception as e:
                     raise customExceptions.Error(e, 'CantGetObjCoordinates')
 
@@ -68,6 +67,14 @@ class ObjectDetector:
                 except Exception as e:
                     raise customExceptions.Error(e, 'CantAddLabelToImage')
 
-        # print("[INFO] saving labeled image...")
+                objects.append(OrderedDict([
+                    ('type', self.CLASSES[idx]),
+                    ('confidence', confidence * 100),
+                    ('coords', OrderedDict([
+                        ('startx', float(startX)), ('starty', float(startY)),
+                        ('endx', float(endX)), ('endy', float(endY)),
+                    ]))
+                ]))
         try: cv2.imwrite(outPath, image)
         except Exception as e: raise customExceptions.Error(e, 'CantSaveOutputImage')
+        return objects
