@@ -5,36 +5,21 @@ LABEL version="1.0"
 
 RUN [ "cross-build-start" ]
 
-RUN apt-get update && apt-get install -y \
-    --no-install-recommends \
-        libtesseract-dev \
-        libsm6 \
+RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 \
         python3-pip \
-        tesseract-ocr \
-        tesseract-ocr-ara \
-        tesseract-ocr-eng \
-        tesseract-ocr-fra \
-        tesseract-ocr-spa \
-        tesseract-ocr-deu \
-        tesseract-ocr-chi-sim \
-        tesseract-ocr-ita \
-        tesseract-ocr-jpn \
-        tesseract-ocr-por \
-        tesseract-ocr-rus \
-        tesseract-ocr-tur \
-        tesseract-ocr-kor \
+        python3-setuptools \
         && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /iexec
 
-COPY ./app /object-detection
+COPY ./app /object-detector
 
-WORKDIR /object-detection
+WORKDIR /object-detector
 
-# RUN pip3 install pytesseract pillow PyYAML yamlordereddictloader
+RUN pip3 install PyYAML yamlordereddictloader
 
 RUN [ "cross-build-end" ]
 
-ENTRYPOINT [ "/object-detection/docker-start" ]
+ENTRYPOINT [ "/object-detector/docker-start" ]
