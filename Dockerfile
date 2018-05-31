@@ -3,21 +3,25 @@ FROM ubuntu:16.04
 LABEL maintainer="Zied Guesmi <guesmy.zied@gmail.com>"
 LABEL version="1.0"
 
+COPY requirements.txt /object-detector/requirements.txt
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        # libsm6 \
         libgtk2.0-dev \
         python3 \
         python3-pip \
         python3-setuptools \
         && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    pip3 install -r /object-detector/requirements.txt  --no-cache-dir && \
+    rm /object-detector/requirements.txt && \
+    apt-get remove -y python3-pip && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN mkdir /iexec
 
-COPY ./app /object-detector
-
 WORKDIR /object-detector
 
-RUN pip3 install -r requirements.txt
+COPY ./app /object-detector
 
-ENTRYPOINT [ "/object-detector/docker-start" ]
+ENTRYPOINT [ "/object-detector/entrypoint" ]

@@ -1,1 +1,15 @@
 app/src/__pycache__
+DATADIR
+DATADIR.old
+LICENSE
+README.md
+_config.yml
+build
+contracts
+datadir.sh
+iexec.js
+images
+node_modules
+package-lock.json
+package.json
+truffle.js

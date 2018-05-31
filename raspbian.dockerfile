@@ -6,20 +6,23 @@ LABEL version="1.0"
 RUN [ "cross-build-start" ]
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgtk2.0-dev \
         python3 \
         python3-pip \
         python3-setuptools \
         && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    pip3 install --no-cache-dir PyYAML yamlordereddictloader && \
+    apt-get remove -y python3-pip && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN mkdir /iexec
 
-COPY ./app /object-detector
+RUN [ "cross-build-end" ]
 
 WORKDIR /object-detector
 
-RUN pip3 install PyYAML yamlordereddictloader
+COPY ./app /object-detector
 
-RUN [ "cross-build-end" ]
-
-ENTRYPOINT [ "/object-detector/docker-start" ]
+ENTRYPOINT [ "/object-detector/entrypoint" ]
