@@ -45,6 +45,10 @@ class App:
     @property
     def out(self):
         return self._paths['/out']
+    
+    @property
+    def jsonFile(self):
+        return self._paths['json']
 
     def readAppConfigFile(self):
         dirname = os.path.dirname
@@ -132,4 +136,4 @@ class App:
 if __name__ == '__main__':
     app = App()
     app.main()
-    Consensus(datadir=app.datadir, outputdir=app.out)
+    Consensus(datadir=app.datadir, target=app.jsonFile)

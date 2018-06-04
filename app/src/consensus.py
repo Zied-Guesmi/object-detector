@@ -14,19 +14,16 @@ class Consensus:
 
     _CONSENSUS_FILENAME = 'consensus.iexec'
 
-    def __init__(self, datadir, outputdir):
+    def __init__(self, datadir, target):
         path = '{}/{}'.format(datadir, self._CONSENSUS_FILENAME)
-        self.create(consensusFilePath=path, outputdir=outputdir)
+        self.create(consensusFilePath=path, target=target)
 
-    def create(self, consensusFilePath, outputdir):
+    def create(self, consensusFilePath, target):
         try:
-            consensus = open(consensusFilePath, 'w+')
-            for filename in os.listdir(outputdir):
-                path = '{}/{}'.format(outputdir, filename)
-                filehash = self.hashFile(path)
-                consensus.write('{}\n'.format(filehash))
+            with open(consensusFilePath, 'w+') as consensus:
+                consensus.write(self.hashFile(target))
         except Exception as e:
-            raise customExceptions.Fatal(e + ' - ' + filename)
+            raise customExceptions.Fatal(e + ' - ' + target)
         finally:
             consensus.close()
 
