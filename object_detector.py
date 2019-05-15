@@ -18,10 +18,12 @@ known_classes = [ "background", "aeroplane", "bicycle", "bird", "boat", "bottle"
                   "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person",
                   "pottedplant", "sheep", "sofa", "train", "tvmonitor" ]
 generated_colors = np.random.uniform(0, 255, size=(len(known_classes), 3))
+input_dir = ""
+output_dir = ""
 
-def input_abs_path(filename): return "/iexec_in/" + filename
+def input_abs_path(filename): return input_dir + "/" + filename
 
-def output_abs_path(filename): return "/iexec_out/" + filename
+def output_abs_path(filename): return output_dir + "/" + filename
 
 def is_supported_image(filepath):
     return os.path.isfile(filepath) and imghdr.what(filepath) in supported_images
@@ -78,9 +80,13 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--image-uri",      type=str,                           help="URI of image to be processes")
-    parser.add_argument("--models-dir",     type=str,   default="/iexec_in",    help="URI of image to be processes")
-    parser.add_argument("--min-confidence", type=int,   default=0.2,            help="Minimum confidence to consider prediction")
+    parser.add_argument("--input-dir",     type=str,   default="/iexec_in",    help="Trained models folder path")
+    parser.add_argument("--output-dir",     type=str,   default="/iexec_out",   help="Output folder path")
+    parser.add_argument("--min-confidence", type=float, default=0.2,            help="Minimum confidence to consider prediction")
     params = parser.parse_args()
+
+    input_dir = params.input_dir
+    output_dir = params.output_dir
 
     image_name, image_path = load_input_image(params.image_uri)
     save_to = output_abs_path(image_name)
@@ -92,19 +98,25 @@ if __name__ == "__main__":
     determinism_file = output_abs_path("determinism.iexec")
 
     if not is_supported_image(image_path):
-        print("File type not supported: " + image_path, end="\n\n")
+        print("File type not supported: " + image_path)
         exit(1)
 
     try:
+
+        # clean output folder
+        for f in os.listdir(output_dir): os.remove(output_abs_path(f))
+
+        # detect objects
         print("Processing image: " + image_name)
         objects_in_image = detect_objects(net, image_path, save_to, params.min_confidence)
-        print()
-        with open(determinism_file, "a") as df:
+
+        # save determinism output
+        with open(determinism_file, "w") as df:
             df.write(image_name + "\n")
-            df.write("\n".join(objects_in_image) + "\n\n")
+            df.write("\n".join(objects_in_image))
 
     except Exception as e:
-        print(traceback.format_exc(), end="\n\n")
-        with open(determinism_file, "a") as df:
+        print(traceback.format_exc())
+        with open(determinism_file, "w") as df:
             df.write(image_name + "\n")
-            df.write(traceback.format_exc() + "\n\n")
+            df.write(traceback.format_exc())
