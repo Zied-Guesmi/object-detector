@@ -108,26 +108,3 @@ if __name__ == "__main__":
         with open(determinism_file, "a") as df:
             df.write(image_name + "\n")
             df.write(traceback.format_exc() + "\n\n")
-
-
-    # for image_name in os.listdir(params.models_dir):
-    #     input_image_path = input_file_path(image_name)
-    #     output_image_path = output_file_path(image_name)
-
-    #     if not is_supported_image(input_image_path):
-    #         print("File type not supported: " + input_image_path, end="\n\n")
-    #         continue
-
-    #     try:
-    #         print("Processing image: " + input_image_path)
-    #         objects_in_image = detect_objects(net, input_image_path, output_image_path, params.min_confidence)
-    #         print()
-    #         with open(determinism_file, "a") as df:
-    #             df.write(image_name + "\n")
-    #             df.write("\n".join(objects_in_image) + "\n\n")
-
-    #     except Exception as e:
-    #         print(traceback.format_exc(), end="\n\n")
-    #         with open(determinism_file, "a") as df:
-    #             df.write(image_name + "\n")
-    #             df.write(traceback.format_exc() + "\n\n")
