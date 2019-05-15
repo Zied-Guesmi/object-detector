@@ -17,4 +17,4 @@ RUN mkdir /iexec_in /iexec_out
 
 COPY object_detector.py /object_detector.py
 
-ENTRYPOINT python3 /object_detector.py
+ENTRYPOINT [ "python3", "/object_detector.py" ]

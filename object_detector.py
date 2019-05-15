@@ -5,6 +5,7 @@ import argparse
 import traceback
 import urllib.request
 import shutil
+from urllib.parse import urlparse
 
 from collections import OrderedDict
 import numpy as np
@@ -18,12 +19,18 @@ known_classes = [ "background", "aeroplane", "bicycle", "bird", "boat", "bottle"
                   "pottedplant", "sheep", "sofa", "train", "tvmonitor" ]
 generated_colors = np.random.uniform(0, 255, size=(len(known_classes), 3))
 
-def input_file_path(filename): return "/iexec_in/" + filename
+def input_abs_path(filename): return "/iexec_in/" + filename
 
-def output_file_path(filename): return "/iexec_out/" + filename
+def output_abs_path(filename): return "/iexec_out/" + filename
 
 def is_supported_image(filepath):
     return os.path.isfile(filepath) and imghdr.what(filepath) in supported_images
+
+def load_input_image(image_uri):
+    parsed_url = urlparse(image_uri)
+    image_name = os.path.basename(parsed_url.path)
+    image_path, http_message = urllib.request.urlretrieve(image_uri)
+    return image_name, image_path
 
 def load_dnn_model(prototxt, caffe_model):
     print("Loading DNN network model")
@@ -70,37 +77,57 @@ def detect_objects(net, input_image_path, output_image_path, min_confidence):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image-uri",     type=str, default="/iexec_in",  help="URI of image to be processes")
-    parser.add_argument("--min-confidence", type=int, default=0.2,          help="Minimum confidence to consider prediction")
+    parser.add_argument("--image-uri",      type=str,                           help="URI of image to be processes")
+    parser.add_argument("--models-dir",     type=str,   default="/iexec_in",    help="URI of image to be processes")
+    parser.add_argument("--min-confidence", type=int,   default=0.2,            help="Minimum confidence to consider prediction")
     params = parser.parse_args()
 
-    filepath = urllib.request.urlretrieve(params.image_uri)
-    print(filepath)
+    image_name, image_path = load_input_image(params.image_uri)
+    save_to = output_abs_path(image_name)
 
-    prototxt = input_file_path("MobileNetSSD_deploy.prototxt.txt")
-    caffe_model = input_file_path("MobileNetSSD_deploy.caffemodel")
+    prototxt = input_abs_path("MobileNetSSD_deploy.prototxt.txt")
+    caffe_model = input_abs_path("MobileNetSSD_deploy.caffemodel")
     net = load_dnn_model(prototxt, caffe_model)
 
-    determinism_file = output_file_path("determinism.iexec")
+    determinism_file = output_abs_path("determinism.iexec")
 
-    for image_name in os.listdir(params.images_dir):
-        input_image_path = input_file_path(image_name)
-        output_image_path = output_file_path(image_name)
+    if not is_supported_image(image_path):
+        print("File type not supported: " + image_path, end="\n\n")
+        exit(1)
 
-        if not is_supported_image(input_image_path):
-            print("File type not supported: " + input_image_path, end="\n\n")
-            continue
+    try:
+        print("Processing image: " + image_name)
+        objects_in_image = detect_objects(net, image_path, save_to, params.min_confidence)
+        print()
+        with open(determinism_file, "a") as df:
+            df.write(image_name + "\n")
+            df.write("\n".join(objects_in_image) + "\n\n")
 
-        try:
-            print("Processing image: " + input_image_path)
-            objects_in_image = detect_objects(net, input_image_path, output_image_path, params.min_confidence)
-            print()
-            with open(determinism_file, "a") as df:
-                df.write(image_name + "\n")
-                df.write("\n".join(objects_in_image) + "\n\n")
+    except Exception as e:
+        print(traceback.format_exc(), end="\n\n")
+        with open(determinism_file, "a") as df:
+            df.write(image_name + "\n")
+            df.write(traceback.format_exc() + "\n\n")
 
-        except Exception as e:
-            print(traceback.format_exc(), end="\n\n")
-            with open(determinism_file, "a") as df:
-                df.write(image_name + "\n")
-                df.write(traceback.format_exc() + "\n\n")
+
+    # for image_name in os.listdir(params.models_dir):
+    #     input_image_path = input_file_path(image_name)
+    #     output_image_path = output_file_path(image_name)
+
+    #     if not is_supported_image(input_image_path):
+    #         print("File type not supported: " + input_image_path, end="\n\n")
+    #         continue
+
+    #     try:
+    #         print("Processing image: " + input_image_path)
+    #         objects_in_image = detect_objects(net, input_image_path, output_image_path, params.min_confidence)
+    #         print()
+    #         with open(determinism_file, "a") as df:
+    #             df.write(image_name + "\n")
+    #             df.write("\n".join(objects_in_image) + "\n\n")
+
+    #     except Exception as e:
+    #         print(traceback.format_exc(), end="\n\n")
+    #         with open(determinism_file, "a") as df:
+    #             df.write(image_name + "\n")
+    #             df.write(traceback.format_exc() + "\n\n")
