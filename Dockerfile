@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        unzip \
         libgtk2.0-dev \
         python3 \
         python3-pip \
@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN mkdir /iexec_in /iexec_out
 
-COPY object_detector.py /object_detector.py
+COPY object_detector.py     /object_detector.py
+COPY docker-entrypoint.sh   /docker-entrypoint.sh
 
-ENTRYPOINT [ "python3", "/object_detector.py" ]
+RUN chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT [ "/docker-entrypoint.sh" ]
