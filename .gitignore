@@ -36,3 +36,4 @@ DATADIR.old
 wallet.json
 account.json
 trash.py
+out
