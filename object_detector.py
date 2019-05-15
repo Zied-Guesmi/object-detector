@@ -3,6 +3,8 @@ import sys
 import subprocess
 import argparse
 import traceback
+import urllib.request
+import shutil
 
 from collections import OrderedDict
 import numpy as np
@@ -68,9 +70,12 @@ def detect_objects(net, input_image_path, output_image_path, min_confidence):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--images-dir",     type=str, default="/iexec_in",  help="Path to folder containing images")
+    parser.add_argument("--image-uri",     type=str, default="/iexec_in",  help="URI of image to be processes")
     parser.add_argument("--min-confidence", type=int, default=0.2,          help="Minimum confidence to consider prediction")
     params = parser.parse_args()
+
+    filepath = urllib.request.urlretrieve(params.image_uri)
+    print(filepath)
 
     prototxt = input_file_path("MobileNetSSD_deploy.prototxt.txt")
     caffe_model = input_file_path("MobileNetSSD_deploy.caffemodel")
