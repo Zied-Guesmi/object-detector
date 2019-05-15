@@ -1,11 +1,9 @@
+images/
+models/
+out/
 .DS_Store
 .git
 .gitignore
-images
-images.zip
 LICENSE
 README.md
 _config.yml
-datadir.sh
-models
-out
