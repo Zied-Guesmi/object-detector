@@ -1,14 +1,11 @@
 .DS_Store
 .git
 .gitignore
-DATADIR
-DATADIR.old
-DATADIR.zip
+images
+images.zip
 LICENSE
 README.md
 _config.yml
 datadir.sh
-images
 models
 out
-requirements.txt

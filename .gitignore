@@ -31,9 +31,5 @@ node_modules
 .DS_Store
 __pycache__
 datadir.sh
-DATADIR
-DATADIR.old
-wallet.json
-account.json
-trash.py
 out
+images
