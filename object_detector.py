@@ -1,13 +1,9 @@
 import os
-import sys
-import subprocess
 import argparse
 import traceback
 import urllib.request
-import shutil
 from urllib.parse import urlparse
 
-from collections import OrderedDict
 import numpy as np
 import cv2
 import imghdr
@@ -28,15 +24,26 @@ def output_abs_path(filename): return output_dir + "/" + filename
 def is_supported_image(filepath):
     return os.path.isfile(filepath) and imghdr.what(filepath) in supported_images
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("image-uri",        type=str,                           help="URI of image to be processes")
+    parser.add_argument("--input-dir",      type=str,   default="/iexec_in",    help="Trained models folder path")
+    parser.add_argument("--output-dir",     type=str,   default="/iexec_out",   help="Output folder path")
+    parser.add_argument("--min-confidence", type=float, default=0.2,            help="Minimum confidence to consider prediction")
+    params = vars(parser.parse_args())
+    return params["image-uri"], params["input_dir"], params["output_dir"], params["min_confidence"]
+
 def load_input_image(image_uri):
     parsed_url = urlparse(image_uri)
     image_name = os.path.basename(parsed_url.path)
     image_path, http_message = urllib.request.urlretrieve(image_uri)
     return image_name, image_path
 
-def load_dnn_model(prototxt, caffe_model):
+def load_dnn_model():
     print("Loading DNN network model")
+    prototxt = input_abs_path("MobileNetSSD_deploy.prototxt.txt")
     print("Prototxt file:" + prototxt)
+    caffe_model = input_abs_path("MobileNetSSD_deploy.caffemodel")
     print("caffe model file:" + caffe_model, end="\n\n")
     return cv2.dnn.readNetFromCaffe(prototxt, caffe_model)
 
@@ -46,7 +53,7 @@ def detect_objects(net, input_image_path, output_image_path, min_confidence):
     (h, w) = image.shape[:2]
     blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 0.007843, (300, 300), 127.5)
 
-    # run detector
+    # pass image throw model
     net.setInput(blob)
     detections = net.forward()
 
@@ -78,45 +85,26 @@ def detect_objects(net, input_image_path, output_image_path, min_confidence):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--image-uri",      type=str,                           help="URI of image to be processes")
-    parser.add_argument("--input-dir",     type=str,   default="/iexec_in",    help="Trained models folder path")
-    parser.add_argument("--output-dir",     type=str,   default="/iexec_out",   help="Output folder path")
-    parser.add_argument("--min-confidence", type=float, default=0.2,            help="Minimum confidence to consider prediction")
-    params = parser.parse_args()
-
-    input_dir = params.input_dir
-    output_dir = params.output_dir
-
-    image_name, image_path = load_input_image(params.image_uri)
+    image_uri, input_dir, output_dir, min_confidence = parse_args()
+    image_name, image_path = load_input_image(image_uri)
     save_to = output_abs_path(image_name)
-
-    prototxt = input_abs_path("MobileNetSSD_deploy.prototxt.txt")
-    caffe_model = input_abs_path("MobileNetSSD_deploy.caffemodel")
-    net = load_dnn_model(prototxt, caffe_model)
-
     determinism_file = output_abs_path("determinism.iexec")
 
     if not is_supported_image(image_path):
         print("File type not supported: " + image_path)
         exit(1)
 
-    try:
+    # clean output folder if needed
+    for f in os.listdir(output_dir): os.remove(output_abs_path(f))
 
-        # clean output folder
-        for f in os.listdir(output_dir): os.remove(output_abs_path(f))
+    # load model
+    net = load_dnn_model()
 
-        # detect objects
-        print("Processing image: " + image_name)
-        objects_in_image = detect_objects(net, image_path, save_to, params.min_confidence)
+    # run detector
+    print("Processing image: " + image_name)
+    objects_in_image = detect_objects(net, image_path, save_to, min_confidence)
 
-        # save determinism output
-        with open(determinism_file, "w") as df:
-            df.write(image_name + "\n")
-            df.write("\n".join(objects_in_image))
-
-    except Exception as e:
-        print(traceback.format_exc())
-        with open(determinism_file, "w") as df:
-            df.write(image_name + "\n")
-            df.write(traceback.format_exc())
+    # save determinism output
+    with open(determinism_file, "w") as df:
+        df.write(image_name + "\n")
+        df.write("\n".join(objects_in_image))

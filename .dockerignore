@@ -1,6 +1,6 @@
 images/
-models/
-models.zip
+model/
+model.zip
 out/
 .DS_Store
 .git
