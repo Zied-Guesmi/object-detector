@@ -18,6 +18,4 @@ RUN mkdir /iexec_in /iexec_out
 COPY object_detector.py     /object_detector.py
 COPY docker-entrypoint.sh   /docker-entrypoint.sh
 
-RUN chmod +x /docker-entrypoint.sh
-
-ENTRYPOINT [ "/docker-entrypoint.sh" ]
+ENTRYPOINT ["bash", "/docker-entrypoint.sh" ]
